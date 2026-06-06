@@ -1,25 +1,20 @@
-from fastapi import HTTPException
-from starlette import status
 from datetime import datetime, timezone
-from dtos.location.location_response import LocationResponseDTO
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+from starlette import status
 from dtos.location.location_create import LocationCreateDTO
 from dtos.location.location_update import LocationUpdateDTO
-from services.client_service import ClientService
-
-# Datos simulados por el momento
-from simulations.locations_data import locations_data
-locations = locations_data
+from models.location import Location
+from repositories.location_repository import LocationRepository
 
 class LocationService:
+    @staticmethod
+    def get_locations(db: Session):
+        return LocationRepository.get_locations(db = db)
 
     @staticmethod
-    def get_locations():
-        active_locations = [l for l in locations if l.active]
-        return active_locations
-
-    @staticmethod
-    def find_location(location_id: int):
-        location: LocationResponseDTO = next((l for l in locations if l.id == location_id), None)
+    def find_location(location_id: int, db: Session):
+        location = LocationRepository.find_location(location_id = location_id, db = db)
 
         if not location:
             raise HTTPException(
@@ -30,19 +25,10 @@ class LocationService:
         return location
 
     @staticmethod
-    def create_location(dto: LocationCreateDTO):
-        # Sacamos el siguiente id disponible
-        location_id = max((l.id for l in locations), default = 0) + 1
-
-        # Revisamos que el cliente exista
-        ClientService.find_client(client_id = dto.client_id)
-
-        # Tomamos la fecha actual
+    def create_location(dto: LocationCreateDTO, db: Session):
+        # Armamos la sucursal que se va a guardar
         now = datetime.now(timezone.utc)
-
-        # Creamos la sucursal
-        location = LocationResponseDTO(
-            id = location_id,
+        data = Location(
             client_id = dto.client_id,
             name = dto.name,
             address = dto.address,
@@ -56,37 +42,46 @@ class LocationService:
             updated_at = now
         )
 
-        # Agregamos la sucursal a la lista
-        locations.append(location)
+        return LocationRepository.create_location(data = data, db = db)
 
-        # Regresamos el resultado
+    @staticmethod
+    def update_location(dto: LocationUpdateDTO, db: Session):
+        # Armamos la sucursal con los datos actualizados
+        data = Location(
+            id = dto.id,
+            client_id = dto.client_id,
+            name = dto.name,
+            address = dto.address,
+            city = dto.city,
+            state = dto.state,
+            postal_code = dto.postal_code,
+            phone = dto.phone,
+            email = dto.email,
+            updated_at = datetime.now(timezone.utc)
+        )
+
+        location = LocationRepository.update_location(data = data, db = db)
+
+        if not location:
+            raise HTTPException(
+                status_code = status.HTTP_404_NOT_FOUND,
+                detail = "Location not found"
+            )
+
         return location
 
     @staticmethod
-    def update_location(dto: LocationUpdateDTO):
-        # Buscamos la sucursal
-        location: LocationResponseDTO = LocationService.find_location(location_id = dto.id)
+    def delete_location(location_id: int, db: Session):
+        location = LocationRepository.delete_location(
+            location_id = location_id,
+            updated_at = datetime.now(timezone.utc),
+            db = db
+        )
 
-        # Revisamos que el cliente exista
-        ClientService.find_client(client_id = dto.client_id)
-
-        # Actualizamos los datos
-        location.name = dto.name
-        location.address = dto.address
-        location.city = dto.city
-        location.state = dto.state
-        location.postal_code = dto.postal_code
-        location.phone = dto.phone
-        location.email = dto.email
-        location.updated_at = datetime.now(timezone.utc)
-
-        return location
-
-    @staticmethod
-    def delete_location(location_id: int):
-        location: LocationResponseDTO = LocationService.find_location(location_id = location_id)
-
-        location.active = False
-        location.updated_at = datetime.now(timezone.utc)
+        if not location:
+            raise HTTPException(
+                status_code = status.HTTP_404_NOT_FOUND,
+                detail = "Location not found"
+            )
 
         return location

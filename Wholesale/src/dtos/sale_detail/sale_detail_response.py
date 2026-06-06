@@ -7,3 +7,6 @@ class SaleDetailResponseDTO(BaseModel):
     quantity: int = Field(gt=0)
     unit_price: float = Field(gt=0)
     subtotal: float = Field(ge=0)
+
+    class Config:
+        from_attributes = True

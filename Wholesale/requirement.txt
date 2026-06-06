@@ -1,3 +1,6 @@
 fastapi
 uvicorn
 email-validator
+sqlalchemy
+python-dotenv
+pyodbc

@@ -12,3 +12,6 @@ class ProductResponseDTO(BaseModel):
     active: bool
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True

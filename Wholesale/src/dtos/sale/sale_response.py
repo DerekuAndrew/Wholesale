@@ -13,3 +13,6 @@ class SaleResponseDTO(BaseModel):
     created_at: datetime
     updated_at: datetime
     details: List[SaleDetailResponseDTO]
+
+    class Config:
+        from_attributes = True

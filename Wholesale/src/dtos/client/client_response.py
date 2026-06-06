@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
+from typing import List
+from dtos.location.location_response import LocationResponseDTO
 
 class ClientResponseDTO(BaseModel):
     id:int
@@ -10,3 +12,7 @@ class ClientResponseDTO(BaseModel):
     active: bool
     created_at: datetime
     updated_at: datetime
+
+    locations: List[LocationResponseDTO] = []
+    class Config:
+        from_attributes = True

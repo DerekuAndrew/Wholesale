@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from routes import client_api, location_api, product_api, sale_api
+import models  # Importamos los modelos para que esten disponibles
 
 app = FastAPI(
     title="Wholesale System",
